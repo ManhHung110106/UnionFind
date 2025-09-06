@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils import repetition_code, toric_code_x_logicals, toric_code_x_stabilisers
-import UnionFindPy
-import pymatching
 
 import sys
 import time
@@ -39,9 +37,19 @@ if __name__ == "__main__":
         print(f'   Default value for num_trials is {DEFAULT_NUM_TRIALS}')
 
     if sys.argv[1].strip().lower() == 'uf':
-        DecoderClass = UnionFindPy.Decoder
+        try:
+            import UnionFindPy
+            DecoderClass = UnionFindPy.Decoder
+        except ImportError:
+            print("Error: UnionFindPy module is not available. Please build it first or use 'matching' instead.")
+            sys.exit(1)
     elif sys.argv[1].strip().lower() == 'matching':
-        DecoderClass = pymatching.Matching
+        try:
+            import pymatching
+            DecoderClass = pymatching.Matching
+        except ImportError:
+            print("Error: pymatching module is not available. Please install it with: pip install pymatching")
+            sys.exit(1)
     else:
         print("The first argument must be 'uf' or 'matching'")
         sys.exit(1)

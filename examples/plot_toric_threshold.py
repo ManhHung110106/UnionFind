@@ -7,12 +7,16 @@ import matplotlib.pyplot as plt
 
 from utils import repetition_code, toric_code_x_logicals, toric_code_x_stabilisers
 from UnionFindPy import Decoder
+from pymatching import Matching
 
-def num_decoding_failures(L, H, logicals, p, num_trials):
-    decoder = Decoder(toric_code_x_stabilisers(L))
+def num_decoding_failures(Alg, H, logicals, p, num_trials):
+    if Alg == "UF":
+        decoder = Decoder(H) # for UF
+    elif Alg == "Matching":
+        decoder = Matching(H)  # for Matching
     num_errors = 0
     for i in range(num_trials):
-        noise = np.random.binomial(1, p, 2 * L * L)
+        noise = np.random.binomial(1, p, H.shape[1])
         syndrome = H @ noise % 2
         correction = decoder.decode(syndrome)
         error = (noise + correction) % 2
@@ -22,7 +26,9 @@ def num_decoding_failures(L, H, logicals, p, num_trials):
 
 
 if __name__ == "__main__":
-    num_trials = 20000
+    Alg = "UF" # UF | Matching
+
+    num_trials = 1000
     Ls = range(3, 19, 2)
     ps = np.linspace(0.01, 0.15, 15)
     np.random.seed(2)
@@ -33,7 +39,7 @@ if __name__ == "__main__":
         logX = toric_code_x_logicals(L)
         log_errors = []
         for p in ps:
-            num_errors = num_decoding_failures(L, Hx, logX, p, num_trials)
+            num_errors = num_decoding_failures(Alg, Hx, logX, p, num_trials)
             log_errors.append(num_errors / num_trials)
         log_errors_all_L.append(np.array(log_errors))
 

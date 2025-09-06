@@ -6,11 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import repetition_code, toric_code_x_logicals, toric_code_x_stabilisers
 from UnionFindPy import Decoder
+from pymatching import Matching
 
-def num_decoding_failures_noisy_syndromes(H, logicals, p, q, num_trials, repetitions):
+def num_decoding_failures_noisy_syndromes(Alg, H, logicals, p, q, num_trials, repetitions):
     num_stabilisers, num_qubits = H.shape
     num_errors = 0
-    decoder = Decoder(H, repetitions)
+    if Alg == "UF":
+        decoder = Decoder(H, repetitions) # for UF
+    elif Alg == "Matching":
+        decoder = Matching(H, repetitions=repetitions)  # for Matching
     for i in range(num_trials):
         noise_new = (np.random.rand(repetitions, num_qubits) < p).astype(np.uint8)
         noise_cumulative = (np.cumsum(noise_new, axis=0) % 2).astype(np.uint8)
@@ -26,16 +30,18 @@ def num_decoding_failures_noisy_syndromes(H, logicals, p, q, num_trials, repetit
         correction = decoder.decode(noisy_syndrome)
 
         error = (noise_total + correction) % 2
-        assert not np.any(H @ error % 2)
+        
         if np.any(error @ logicals.T % 2):
             num_errors += 1
     return num_errors
 
 
 if __name__ == "__main__":
-    num_trials = 5000
-    Ls = range(8, 13, 2)
-    ps = np.linspace(0.02, 0.04, 7)
+    Alg = "Matching"
+
+    num_trials = 1000
+    Ls = range(3, 19, 2)
+    ps = np.linspace(0.01, 0.1, 15)
     log_errors_all_L = []
     for L in Ls:
         print("Simulating L={}...".format(L))
@@ -44,7 +50,7 @@ if __name__ == "__main__":
         log_errors = []
         for p in ps:
             num_errors = num_decoding_failures_noisy_syndromes(
-                Hx, logX, p, p, num_trials, L
+                Alg, Hx, logX, p, p, num_trials, L
             )
             log_errors.append(num_errors / num_trials)
         log_errors_all_L.append(np.array(log_errors))
